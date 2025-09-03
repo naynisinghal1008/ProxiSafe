@@ -1,2 +1,0 @@
-# ProxiSafe
-Social Distancing tracker
