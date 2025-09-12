@@ -15,57 +15,88 @@ class ChartsManager {
             teal: '#14b8a6'
         };
         this.currentPeriod = '24h';
+        this.analyticsEngine = null;
+        this.isInteractive = true;
+        this.animationDuration = 300;
     }
 
     init() {
-        this.createViolationsChart();
-        this.createComplianceChart();
-        this.initAnalyticsCharts();
+        try {
+            // Initialize analytics engine if available
+            if (window.AnalyticsEngine) {
+                this.analyticsEngine = new AnalyticsEngine();
+            }
+            
+            // Update colors from theme if available
+            this.updateColorsFromTheme();
+            
+            this.createViolationsChart();
+            this.createComplianceChart();
+            this.initAnalyticsCharts();
+            this.bindInteractiveEvents();
+        } catch (error) {
+            console.error('Charts initialization error:', error);
+            // Continue with basic chart functionality
+            this.createViolationsChart();
+            this.createComplianceChart();
+        }
     }
 
     initAnalyticsCharts() {
-        this.createHourlyViolationsChart();
-        this.createWeeklyTrendsChart();
-        this.createLocationViolationsChart();
-        this.createViolationTypesChart();
-        this.updateComplianceScore();
+        try {
+            this.createHourlyViolationsChart();
+            this.createWeeklyTrendsChart();
+            this.createLocationViolationsChart();
+            this.createViolationTypesChart();
+            this.updateComplianceScore();
+        } catch (error) {
+            console.error('Analytics charts initialization error:', error);
+        }
     }
 
     createViolationsChart() {
-        const canvas = document.getElementById('violations-chart');
-        if (!canvas) return;
+        try {
+            const canvas = document.getElementById('violations-chart');
+            if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        const data = this.generateViolationsData(this.currentPeriod);
+            const ctx = canvas.getContext('2d');
+            const data = this.generateViolationsData(this.currentPeriod);
 
-        this.drawLineChart(ctx, data, {
-            title: 'Violations Over Time',
-            color: this.chartColors.danger,
-            fillColor: this.chartColors.danger + '20',
-            showGrid: true,
-            showPoints: true
-        });
+            this.drawLineChart(ctx, data, {
+                title: 'Violations Over Time',
+                color: this.chartColors.danger,
+                fillColor: this.chartColors.danger + '20',
+                showGrid: true,
+                showPoints: true
+            });
 
-        this.charts['violations'] = { canvas, data };
+            this.charts['violations'] = { canvas, data };
+        } catch (error) {
+            console.error('Error creating violations chart:', error);
+        }
     }
 
     createComplianceChart() {
-        const canvas = document.getElementById('compliance-chart');
-        if (!canvas) return;
+        try {
+            const canvas = document.getElementById('compliance-chart');
+            if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-        const data = this.generateComplianceData();
+            const ctx = canvas.getContext('2d');
+            const data = this.generateComplianceData();
 
-        this.drawLineChart(ctx, data, {
-            title: 'Compliance Rate',
-            color: this.chartColors.success,
-            fillColor: this.chartColors.success + '20',
-            showGrid: true,
-            showPoints: true,
-            yAxisSuffix: '%'
-        });
+            this.drawLineChart(ctx, data, {
+                title: 'Compliance Rate',
+                color: this.chartColors.success,
+                fillColor: this.chartColors.success + '20',
+                showGrid: true,
+                showPoints: true,
+                yAxisSuffix: '%'
+            });
 
-        this.charts['compliance'] = { canvas, data };
+            this.charts['compliance'] = { canvas, data };
+        } catch (error) {
+            console.error('Error creating compliance chart:', error);
+        }
     }
 
     createHourlyViolationsChart() {
@@ -762,3 +793,389 @@ window.addEventListener('resize', () => {
         window.chartsManager.handleResize();
     }
 });
+
+// Enhanced Chart Interaction Methods
+ChartsManager.prototype.bindInteractiveEvents = function() {
+    // Add hover effects and tooltips to all charts
+    Object.keys(this.charts).forEach(chartKey => {
+        const chart = this.charts[chartKey];
+        if (chart && chart.canvas) {
+            this.addChartInteractivity(chart.canvas, chart.data);
+        }
+    });
+};
+
+ChartsManager.prototype.addChartInteractivity = function(canvas, data) {
+    if (!this.isInteractive) return;
+
+    const tooltip = this.createTooltip();
+    
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Simple hit detection for data points
+        const dataPoint = this.getDataPointAtPosition(x, y, data);
+        
+        if (dataPoint) {
+            this.showTooltip(tooltip, e.clientX, e.clientY, dataPoint);
+            canvas.style.cursor = 'pointer';
+        } else {
+            this.hideTooltip(tooltip);
+            canvas.style.cursor = 'default';
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        this.hideTooltip(tooltip);
+        canvas.style.cursor = 'default';
+    });
+
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const dataPoint = this.getDataPointAtPosition(x, y, data);
+        if (dataPoint) {
+            this.onChartClick(dataPoint);
+        }
+    });
+};
+
+ChartsManager.prototype.createTooltip = function() {
+    let tooltip = document.getElementById('chart-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'chart-tooltip';
+        tooltip.className = 'chart-tooltip';
+        tooltip.style.cssText = `
+            position: absolute;
+            background: var(--color-card-background);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: var(--space-2) var(--space-3);
+            font-size: 0.875rem;
+            box-shadow: var(--shadow-md);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--duration-fast) var(--easing-ease);
+            z-index: 1000;
+            max-width: 200px;
+        `;
+        document.body.appendChild(tooltip);
+    }
+    return tooltip;
+};
+
+ChartsManager.prototype.showTooltip = function(tooltip, x, y, dataPoint) {
+    tooltip.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 4px;">${dataPoint.label}</div>
+        <div style="color: var(--color-text-secondary);">Value: ${dataPoint.value}</div>
+        ${dataPoint.additional ? `<div style="color: var(--color-text-secondary); font-size: 0.75rem;">${dataPoint.additional}</div>` : ''}
+    `;
+    
+    tooltip.style.left = (x + 10) + 'px';
+    tooltip.style.top = (y - 10) + 'px';
+    tooltip.style.opacity = '1';
+};
+
+ChartsManager.prototype.hideTooltip = function(tooltip) {
+    tooltip.style.opacity = '0';
+};
+
+ChartsManager.prototype.getDataPointAtPosition = function(x, y, data) {
+    // Simple implementation - would need to be more sophisticated for real charts
+    // This is a placeholder for demonstration
+    return null;
+};
+
+ChartsManager.prototype.onChartClick = function(dataPoint) {
+    if (window.showNotification) {
+        showNotification(`Clicked on ${dataPoint.label}: ${dataPoint.value}`, 'info');
+    }
+};
+
+// Theme Integration Methods
+ChartsManager.prototype.updateColorsFromTheme = function() {
+    if (window.themeManager) {
+        const themeColors = window.themeManager.getThemeColors();
+        this.chartColors = {
+            primary: themeColors.primary,
+            secondary: themeColors.secondary,
+            success: themeColors.success,
+            warning: themeColors.warning,
+            danger: themeColors.danger,
+            info: themeColors.info,
+            purple: '#8b5cf6',
+            pink: '#ec4899',
+            indigo: '#6366f1',
+            teal: '#14b8a6'
+        };
+    }
+};
+
+ChartsManager.prototype.updateChartColors = function(newColors) {
+    if (newColors) {
+        this.chartColors = {
+            ...this.chartColors,
+            primary: newColors.primary,
+            secondary: newColors.secondary,
+            success: newColors.success,
+            warning: newColors.warning,
+            danger: newColors.danger,
+            info: newColors.info
+        };
+    }
+};
+
+// Enhanced Data Generation with Analytics Engine
+ChartsManager.prototype.generateEnhancedViolationsData = function(period = '24h') {
+    if (this.analyticsEngine && window.dashboardManager && window.dashboardManager.violations) {
+        const violations = window.dashboardManager.violations;
+        const timeSeriesData = this.analyticsEngine.prepareTimeSeriesData(violations, period);
+        
+        return timeSeriesData.map(point => ({
+            label: this.formatTimeLabel(point.timestamp, period),
+            value: point.value,
+            timestamp: point.timestamp,
+            violations: point.violations
+        }));
+    }
+    
+    // Fallback to original method
+    return this.generateViolationsData(period);
+};
+
+ChartsManager.prototype.formatTimeLabel = function(timestamp, period) {
+    const date = new Date(timestamp);
+    
+    switch (period) {
+        case '24h':
+            return date.getHours() + ':00';
+        case '7d':
+            return date.toLocaleDateString('en-US', { weekday: 'short' });
+        case '30d':
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        default:
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+};
+
+// Advanced Chart Types
+ChartsManager.prototype.createPredictiveChart = function(canvasId, historicalData, predictions) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    // Combine historical and predicted data
+    const combinedData = [
+        ...historicalData.map(d => ({ ...d, type: 'historical' })),
+        ...predictions.map(d => ({ ...d, type: 'predicted' }))
+    ];
+
+    this.drawPredictiveLineChart(ctx, combinedData, {
+        title: 'Predictive Analysis',
+        historicalColor: this.chartColors.primary,
+        predictedColor: this.chartColors.warning,
+        showConfidenceBands: true
+    });
+};
+
+ChartsManager.prototype.drawPredictiveLineChart = function(ctx, data, options = {}) {
+    const canvas = ctx.canvas;
+    const width = canvas.width = canvas.offsetWidth * 2;
+    const height = canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    
+    const chartWidth = canvas.offsetWidth - 80;
+    const chartHeight = canvas.offsetHeight - 80;
+    const startX = 60;
+    const startY = 40;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+
+    const historicalData = data.filter(d => d.type === 'historical');
+    const predictedData = data.filter(d => d.type === 'predicted');
+    
+    const allValues = data.map(d => d.value);
+    const maxValue = Math.max(...allValues);
+    const stepX = chartWidth / (data.length - 1);
+    const stepY = chartHeight / maxValue;
+
+    // Draw grid
+    this.drawGrid(ctx, startX, startY, chartWidth, chartHeight);
+
+    // Draw historical data
+    if (historicalData.length > 0) {
+        ctx.strokeStyle = options.historicalColor || this.chartColors.primary;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+
+        historicalData.forEach((point, index) => {
+            const x = startX + stepX * index;
+            const y = startY + chartHeight - (point.value * stepY);
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+    }
+
+    // Draw predicted data with dashed line
+    if (predictedData.length > 0) {
+        ctx.strokeStyle = options.predictedColor || this.chartColors.warning;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+
+        const startIndex = historicalData.length - 1;
+        predictedData.forEach((point, index) => {
+            const x = startX + stepX * (startIndex + index);
+            const y = startY + chartHeight - (point.value * stepY);
+            
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    // Draw confidence bands if requested
+    if (options.showConfidenceBands && predictedData.length > 0) {
+        this.drawConfidenceBands(ctx, predictedData, startX, startY, chartWidth, chartHeight, stepX, stepY, historicalData.length - 1);
+    }
+
+    // Draw data points
+    data.forEach((point, index) => {
+        const x = startX + stepX * index;
+        const y = startY + chartHeight - (point.value * stepY);
+        
+        ctx.fillStyle = point.type === 'historical'
+            ? options.historicalColor || this.chartColors.primary
+            : options.predictedColor || this.chartColors.warning;
+        
+        ctx.beginPath();
+        ctx.arc(x, y, point.type === 'predicted' ? 3 : 4, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Draw labels
+    this.drawLabels(ctx, data, startX, startY, chartWidth, chartHeight, stepX, maxValue, options);
+};
+
+ChartsManager.prototype.drawConfidenceBands = function(ctx, predictedData, startX, startY, chartWidth, chartHeight, stepX, stepY, startIndex) {
+    ctx.fillStyle = this.chartColors.warning + '20';
+    ctx.beginPath();
+
+    // Upper confidence band
+    predictedData.forEach((point, index) => {
+        const x = startX + stepX * (startIndex + index);
+        const upperY = startY + chartHeight - ((point.value + (point.confidence || 0.1) * point.value) * stepY);
+        
+        if (index === 0) {
+            ctx.moveTo(x, upperY);
+        } else {
+            ctx.lineTo(x, upperY);
+        }
+    });
+
+    // Lower confidence band (reverse order)
+    for (let i = predictedData.length - 1; i >= 0; i--) {
+        const point = predictedData[i];
+        const x = startX + stepX * (startIndex + i);
+        const lowerY = startY + chartHeight - ((point.value - (point.confidence || 0.1) * point.value) * stepY);
+        ctx.lineTo(x, lowerY);
+    }
+
+    ctx.closePath();
+    ctx.fill();
+};
+
+// Real-time Chart Updates
+ChartsManager.prototype.updateChartRealTime = function(chartKey, newDataPoint) {
+    const chart = this.charts[chartKey];
+    if (!chart) return;
+
+    // Add new data point and remove oldest if needed
+    chart.data.push(newDataPoint);
+    if (chart.data.length > 50) { // Keep last 50 points
+        chart.data.shift();
+    }
+
+    // Redraw chart with animation
+    this.animateChartUpdate(chart.canvas, chart.data);
+};
+
+ChartsManager.prototype.animateChartUpdate = function(canvas, data) {
+    // Simple animation - fade out, update, fade in
+    canvas.style.transition = `opacity ${this.animationDuration}ms ease`;
+    canvas.style.opacity = '0.7';
+    
+    setTimeout(() => {
+        // Redraw chart based on its type
+        this.redrawChart(canvas, data);
+        canvas.style.opacity = '1';
+    }, this.animationDuration / 2);
+};
+
+ChartsManager.prototype.redrawChart = function(canvas, data) {
+    // Determine chart type and redraw accordingly
+    const chartKey = Object.keys(this.charts).find(key => this.charts[key].canvas === canvas);
+    
+    if (chartKey) {
+        switch (chartKey) {
+            case 'violations':
+                this.createViolationsChart();
+                break;
+            case 'compliance':
+                this.createComplianceChart();
+                break;
+            default:
+                // Generic redraw
+                break;
+        }
+    }
+};
+
+// Export functionality
+ChartsManager.prototype.exportAllCharts = function() {
+    const exportData = {};
+    
+    Object.keys(this.charts).forEach(chartKey => {
+        const chart = this.charts[chartKey];
+        if (chart && chart.canvas) {
+            exportData[chartKey] = {
+                dataURL: chart.canvas.toDataURL('image/png'),
+                data: chart.data,
+                timestamp: new Date().toISOString()
+            };
+        }
+    });
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `proxisafe-charts-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (window.showNotification) {
+        showNotification('Charts exported successfully', 'success');
+    }
+};

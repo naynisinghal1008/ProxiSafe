@@ -1,4 +1,4 @@
-// Enhanced Dashboard Manager
+// Enhanced Dashboard Manager with Advanced Analytics
 class DashboardManager {
     constructor() {
         this.currentSection = 'overview';
@@ -23,17 +23,49 @@ class DashboardManager {
             dateFrom: '',
             dateTo: ''
         };
+        
+        // Initialize analytics engine safely
+        this.analyticsEngine = null;
+        this.advancedMetrics = {};
+        this.realTimeData = {
+            lastUpdate: new Date(),
+            updateInterval: 30000, // 30 seconds
+            isLive: true
+        };
     }
 
     init() {
         if (this.isInitialized) return;
         
-        this.bindEvents();
-        this.loadMockData();
-        this.startRealTimeUpdates();
-        this.updateUserInfo();
-        this.initializeFilters();
-        this.isInitialized = true;
+        try {
+            // Initialize analytics engine safely
+            if (window.AnalyticsEngine) {
+                this.analyticsEngine = new AnalyticsEngine();
+            }
+            
+            this.bindEvents();
+            this.loadMockData();
+            
+            // Only calculate advanced metrics if analytics engine is available
+            if (this.analyticsEngine) {
+                this.calculateAdvancedMetrics();
+                this.createAdvancedDashboardElements();
+            }
+            
+            this.startRealTimeUpdates();
+            this.updateUserInfo();
+            this.initializeFilters();
+            this.isInitialized = true;
+        } catch (error) {
+            console.error('Dashboard initialization error:', error);
+            // Continue with basic functionality
+            this.bindEvents();
+            this.loadMockData();
+            this.startRealTimeUpdates();
+            this.updateUserInfo();
+            this.initializeFilters();
+            this.isInitialized = true;
+        }
     }
 
     bindEvents() {
@@ -137,6 +169,7 @@ class DashboardManager {
         this.updateCamerasGrid();
         this.updateUsersList();
         this.updateReportsList();
+        this.updateAdvancedMetrics();
     }
 
     generateMockViolations(count) {
@@ -204,7 +237,7 @@ class DashboardManager {
                 role: roles[Math.floor(Math.random() * roles.length)],
                 lastLogin: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
                 status: Math.random() > 0.2 ? 'active' : 'inactive',
-                avatar: `https://via.placeholder.com/40?text=${names[i]?.charAt(0) || 'U'}`
+                avatar: null // Will use CSS-based professional avatar
             };
             users.push(user);
         }
@@ -399,7 +432,9 @@ class DashboardManager {
             div.className = 'user-item';
             div.innerHTML = `
                 <div class="user-info">
-                    <img src="${user.avatar}" alt="${user.name}" class="user-avatar-small">
+                    <div class="user-avatar-small professional-avatar">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
                     <div class="user-details">
                         <h4>${user.name}</h4>
                         <p>${user.role} - ${user.department}</p>
@@ -604,12 +639,11 @@ class DashboardManager {
             userNameElement.textContent = user.name;
         }
 
-        if (userAvatarElement) {
+        if (userAvatarElement && user.avatar) {
             userAvatarElement.src = user.avatar;
             userAvatarElement.alt = user.name;
         }
     }
-
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         if (sidebar) {
@@ -719,6 +753,7 @@ class DashboardManager {
             stats: this.stats,
             violations: this.violations,
             cameras: this.cameras,
+            advancedMetrics: this.advancedMetrics,
             exportTime: new Date().toISOString()
         };
 
@@ -734,6 +769,342 @@ class DashboardManager {
         URL.revokeObjectURL(url);
 
         showNotification('Data exported successfully', 'success');
+    }
+
+    // Advanced Analytics Methods
+    calculateAdvancedMetrics() {
+        if (!this.analyticsEngine || this.violations.length === 0) return;
+
+        try {
+            this.advancedMetrics = this.analyticsEngine.calculateAdvancedMetrics(this.violations, '24h');
+            
+            // Update UI with advanced metrics
+            this.updateAdvancedMetrics();
+        } catch (error) {
+            console.error('Error calculating advanced metrics:', error);
+            // Continue without advanced metrics
+        }
+    }
+
+    updateAdvancedMetrics() {
+        if (!this.advancedMetrics || !this.advancedMetrics.basic) return;
+
+        try {
+            // Update risk assessment display
+            this.updateRiskAssessment();
+            
+            // Update predictions display
+            this.updatePredictions();
+            
+            // Update anomaly detection
+            this.updateAnomalyDetection();
+            
+            // Update system efficiency metrics
+            this.updateSystemEfficiency();
+        } catch (error) {
+            console.error('Error updating advanced metrics:', error);
+        }
+    }
+
+    updateRiskAssessment() {
+        const riskData = this.advancedMetrics.riskAssessment;
+        if (!riskData) return;
+
+        // Create or update risk assessment card
+        let riskCard = document.getElementById('risk-assessment-card');
+        if (!riskCard) {
+            riskCard = this.createRiskAssessmentCard();
+        }
+
+        const riskLevel = riskCard.querySelector('.risk-level');
+        const riskScore = riskCard.querySelector('.risk-score');
+        const riskComponents = riskCard.querySelector('.risk-components');
+        const riskRecommendations = riskCard.querySelector('.risk-recommendations');
+
+        if (riskLevel) riskLevel.textContent = riskData.level;
+        if (riskScore) riskScore.textContent = Math.round(riskData.overall);
+        
+        if (riskComponents) {
+            riskComponents.innerHTML = Object.entries(riskData.components)
+                .map(([key, value]) => `
+                    <div class="risk-component">
+                        <span class="component-label">${this.formatLabel(key)}:</span>
+                        <span class="component-value">${Math.round(value)}%</span>
+                        <div class="component-bar">
+                            <div class="component-fill" style="width: ${value}%"></div>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        if (riskRecommendations) {
+            riskRecommendations.innerHTML = riskData.recommendations
+                .map(rec => `<li>${rec}</li>`)
+                .join('');
+        }
+
+        // Update risk level styling
+        riskCard.className = `card risk-assessment-card risk-${riskData.level.toLowerCase()}`;
+    }
+
+    updatePredictions() {
+        const predictions = this.advancedMetrics.predictions;
+        if (!predictions || !predictions.next24Hours) return;
+
+        let predictionsCard = document.getElementById('predictions-card');
+        if (!predictionsCard) {
+            predictionsCard = this.createPredictionsCard();
+        }
+
+        const nextHourPrediction = predictionsCard.querySelector('.next-hour-prediction');
+        const next24HoursPrediction = predictionsCard.querySelector('.next-24hours-prediction');
+        const confidenceLevel = predictionsCard.querySelector('.confidence-level');
+
+        if (nextHourPrediction && predictions.nextHour && predictions.nextHour.length > 0) {
+            nextHourPrediction.textContent = Math.round(predictions.nextHour[0].value);
+        }
+
+        if (next24HoursPrediction && predictions.next24Hours) {
+            const totalPredicted = predictions.next24Hours.reduce((sum, p) => sum + p.value, 0);
+            next24HoursPrediction.textContent = Math.round(totalPredicted);
+        }
+
+        if (confidenceLevel && predictions.confidence) {
+            const confidence = Math.round(predictions.confidence * 100);
+            confidenceLevel.textContent = `${confidence}%`;
+            confidenceLevel.className = `confidence-level confidence-${this.getConfidenceClass(confidence)}`;
+        }
+    }
+
+    updateAnomalyDetection() {
+        const anomalies = this.advancedMetrics.anomalies;
+        if (!anomalies) return;
+
+        let anomalyCard = document.getElementById('anomaly-detection-card');
+        if (!anomalyCard) {
+            anomalyCard = this.createAnomalyDetectionCard();
+        }
+
+        const anomalyCount = anomalyCard.querySelector('.anomaly-count');
+        const anomalyList = anomalyCard.querySelector('.anomaly-list');
+        const lastDetected = anomalyCard.querySelector('.last-detected');
+
+        if (anomalyCount) {
+            anomalyCount.textContent = anomalies.count;
+            anomalyCount.className = `anomaly-count ${anomalies.count > 0 ? 'has-anomalies' : 'no-anomalies'}`;
+        }
+
+        if (anomalyList) {
+            if (anomalies.detected.length > 0) {
+                anomalyList.innerHTML = anomalies.detected.slice(0, 3)
+                    .map(anomaly => `
+                        <div class="anomaly-item severity-${anomaly.severity}">
+                            <div class="anomaly-type">${anomaly.type}</div>
+                            <div class="anomaly-description">${anomaly.description}</div>
+                            <div class="anomaly-time">${this.getTimeAgo(anomaly.timestamp)}</div>
+                        </div>
+                    `).join('');
+            } else {
+                anomalyList.innerHTML = '<div class="no-anomalies">No anomalies detected</div>';
+            }
+        }
+
+        if (lastDetected) {
+            lastDetected.textContent = anomalies.lastDetected
+                ? this.getTimeAgo(anomalies.lastDetected)
+                : 'None';
+        }
+    }
+
+    updateSystemEfficiency() {
+        const efficiency = this.advancedMetrics.efficiency;
+        if (!efficiency) return;
+
+        let efficiencyCard = document.getElementById('system-efficiency-card');
+        if (!efficiencyCard) {
+            efficiencyCard = this.createSystemEfficiencyCard();
+        }
+
+        const resolutionRate = efficiencyCard.querySelector('.resolution-rate');
+        const avgResolutionTime = efficiencyCard.querySelector('.avg-resolution-time');
+        const detectionAccuracy = efficiencyCard.querySelector('.detection-accuracy');
+        const overallEfficiency = efficiencyCard.querySelector('.overall-efficiency');
+
+        if (resolutionRate) {
+            resolutionRate.textContent = `${Math.round(efficiency.resolutionRate)}%`;
+        }
+
+        if (avgResolutionTime) {
+            const minutes = Math.round(efficiency.averageResolutionTime / 60);
+            avgResolutionTime.textContent = `${minutes}m`;
+        }
+
+        if (detectionAccuracy) {
+            detectionAccuracy.textContent = `${Math.round(efficiency.detectionAccuracy)}%`;
+        }
+
+        if (overallEfficiency) {
+            const score = Math.round(efficiency.overallEfficiency);
+            overallEfficiency.textContent = `${score}%`;
+            overallEfficiency.className = `overall-efficiency efficiency-${this.getEfficiencyClass(score)}`;
+        }
+    }
+
+    createAdvancedDashboardElements() {
+        const overviewSection = document.getElementById('overview-section');
+        if (!overviewSection) return;
+
+        // Check if already created
+        if (document.getElementById('risk-assessment-card')) return;
+
+        // Create advanced metrics container
+        const advancedMetricsContainer = document.createElement('div');
+        advancedMetricsContainer.className = 'advanced-metrics-container';
+        advancedMetricsContainer.innerHTML = `
+            <h3 class="section-subtitle">Advanced Analytics</h3>
+            <div class="advanced-metrics-grid">
+                <div id="risk-assessment-card" class="card risk-assessment-card">
+                    <div class="card-header">
+                        <h4 class="card-title">Risk Assessment</h4>
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="risk-content">
+                        <div class="risk-score-display">
+                            <span class="risk-score">0</span>
+                            <span class="risk-level">Low</span>
+                        </div>
+                        <div class="risk-components"></div>
+                        <div class="risk-recommendations-container">
+                            <h5>Recommendations:</h5>
+                            <ul class="risk-recommendations"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="predictions-card" class="card predictions-card">
+                    <div class="card-header">
+                        <h4 class="card-title">Predictions</h4>
+                        <i class="fas fa-crystal-ball"></i>
+                    </div>
+                    <div class="predictions-content">
+                        <div class="prediction-item">
+                            <span class="prediction-label">Next Hour:</span>
+                            <span class="next-hour-prediction">0</span>
+                        </div>
+                        <div class="prediction-item">
+                            <span class="prediction-label">Next 24 Hours:</span>
+                            <span class="next-24hours-prediction">0</span>
+                        </div>
+                        <div class="prediction-confidence">
+                            <span class="prediction-label">Confidence:</span>
+                            <span class="confidence-level">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="anomaly-detection-card" class="card anomaly-detection-card">
+                    <div class="card-header">
+                        <h4 class="card-title">Anomaly Detection</h4>
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="anomaly-content">
+                        <div class="anomaly-summary">
+                            <span class="anomaly-count">0</span>
+                            <span class="anomaly-label">Anomalies Detected</span>
+                        </div>
+                        <div class="anomaly-list"></div>
+                        <div class="last-detected-container">
+                            <span class="last-detected-label">Last Detected:</span>
+                            <span class="last-detected">None</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="system-efficiency-card" class="card system-efficiency-card">
+                    <div class="card-header">
+                        <h4 class="card-title">System Efficiency</h4>
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <div class="efficiency-content">
+                        <div class="efficiency-metric">
+                            <span class="metric-label">Resolution Rate:</span>
+                            <span class="resolution-rate">0%</span>
+                        </div>
+                        <div class="efficiency-metric">
+                            <span class="metric-label">Avg Resolution:</span>
+                            <span class="avg-resolution-time">0m</span>
+                        </div>
+                        <div class="efficiency-metric">
+                            <span class="metric-label">Detection Accuracy:</span>
+                            <span class="detection-accuracy">0%</span>
+                        </div>
+                        <div class="efficiency-overall">
+                            <span class="metric-label">Overall Efficiency:</span>
+                            <span class="overall-efficiency">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Insert after the overview grid
+        const overviewGrid = overviewSection.querySelector('.overview-grid');
+        if (overviewGrid) {
+            overviewGrid.parentNode.insertBefore(advancedMetricsContainer, overviewGrid.nextSibling);
+        }
+    }
+
+    createRiskAssessmentCard() {
+        return document.getElementById('risk-assessment-card');
+    }
+
+    createPredictionsCard() {
+        return document.getElementById('predictions-card');
+    }
+
+    createAnomalyDetectionCard() {
+        return document.getElementById('anomaly-detection-card');
+    }
+
+    createSystemEfficiencyCard() {
+        return document.getElementById('system-efficiency-card');
+    }
+
+    formatLabel(key) {
+        return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    }
+
+    getConfidenceClass(confidence) {
+        if (confidence >= 80) return 'high';
+        if (confidence >= 60) return 'medium';
+        return 'low';
+    }
+
+    getEfficiencyClass(score) {
+        if (score >= 80) return 'excellent';
+        if (score >= 60) return 'good';
+        if (score >= 40) return 'fair';
+        return 'poor';
+    }
+
+    // Enhanced real-time updates with advanced analytics
+    updateRealTimeData() {
+        // Simulate small changes in statistics
+        this.stats.totalViolations += Math.floor(Math.random() * 3);
+        this.stats.peopleDetected += Math.floor(Math.random() * 10) - 5;
+        this.stats.complianceRate += Math.floor(Math.random() * 6) - 3;
+        
+        // Keep compliance rate within reasonable bounds
+        this.stats.complianceRate = Math.max(60, Math.min(95, this.stats.complianceRate));
+        this.stats.peopleDetected = Math.max(50, this.stats.peopleDetected);
+
+        this.updateStats();
+        
+        // Recalculate advanced metrics
+        this.calculateAdvancedMetrics();
+        
+        // Update real-time data timestamp
+        this.realTimeData.lastUpdate = new Date();
     }
 }
 
@@ -800,7 +1171,7 @@ function resolveViolation() {
 
 function investigateViolation() {
     if (window.dashboardManager.currentViolation) {
-Violation.status = 'investigating';
+        window.dashboardManager.currentViolation.status = 'investigating';
         showNotification('Violation marked for investigation', 'info');
         closeViolationDetail();
         window.dashboardManager.updateViolationsTable();

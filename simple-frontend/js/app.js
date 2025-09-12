@@ -36,28 +36,41 @@ class ProxiSafeApp {
     }
 
     initializeApp() {
-        // Check if user is already authenticated
-        if (window.authManager && window.authManager.isUserAuthenticated()) {
-            this.showDashboard();
-        } else {
-            this.showLogin();
+        try {
+            // Check if user is already authenticated
+            if (window.authManager && window.authManager.isUserAuthenticated()) {
+                this.showDashboard();
+            } else {
+                this.showLogin();
+            }
+
+            // Initialize global event listeners
+            this.bindGlobalEvents();
+            
+            // Initialize mobile menu
+            this.initializeMobileMenu();
+
+            // Initialize charts if on dashboard
+            if (this.currentPage === 'dashboard') {
+                this.initializeCharts();
+            }
+
+            this.hideLoadingScreen();
+            this.isInitialized = true;
+
+            // Show welcome message
+            setTimeout(() => {
+                if (window.showNotification) {
+                    showNotification('Welcome to PROXISAFE - Social Distancing Tracker', 'info');
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('App initialization error:', error);
+            // Ensure loading screen is hidden even if there's an error
+            this.hideLoadingScreen();
+            this.showLogin(); // Fallback to login page
+            this.isInitialized = true;
         }
-
-        // Initialize global event listeners
-        this.bindGlobalEvents();
-
-        // Initialize charts if on dashboard
-        if (this.currentPage === 'dashboard') {
-            this.initializeCharts();
-        }
-
-        this.hideLoadingScreen();
-        this.isInitialized = true;
-
-        // Show welcome message
-        setTimeout(() => {
-            showNotification('Welcome to PROXISAFE - Social Distancing Tracker', 'info');
-        }, 1000);
     }
 
     bindGlobalEvents() {
@@ -80,6 +93,85 @@ class ProxiSafeApp {
                 e.preventDefault();
             }
         });
+    }
+
+    initializeMobileMenu() {
+        // Mobile menu toggle functionality
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        
+        if (mobileMenuBtn && sidebar) {
+            mobileMenuBtn.addEventListener('click', () => {
+                this.toggleMobileMenu();
+            });
+        }
+        
+        // Close sidebar when clicking overlay
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                this.closeMobileMenu();
+            });
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 1023 && sidebar && sidebar.classList.contains('open')) {
+                if (!sidebar.contains(e.target) && !e.target.closest('.mobile-menu-btn')) {
+                    this.closeMobileMenu();
+                }
+            }
+        });
+        
+        // Handle escape key to close mobile menu
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
+                this.closeMobileMenu();
+            }
+        });
+    }
+    
+    toggleMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar) {
+            const isOpen = sidebar.classList.contains('open');
+            
+            if (isOpen) {
+                this.closeMobileMenu();
+            } else {
+                this.openMobileMenu();
+            }
+        }
+    }
+    
+    openMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar) {
+            sidebar.classList.add('open');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+        
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.add('show');
+        }
+    }
+    
+    closeMobileMenu() {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        
+        if (sidebar) {
+            sidebar.classList.remove('open');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+        
+        if (sidebarOverlay) {
+            sidebarOverlay.classList.remove('show');
+        }
     }
 
     handleKeyboardShortcuts(e) {
@@ -121,11 +213,8 @@ class ProxiSafeApp {
         }
 
         // Close mobile sidebar on desktop resize
-        if (window.innerWidth > 768) {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar) {
-                sidebar.classList.remove('open');
-            }
+        if (window.innerWidth > 1023) {
+            this.closeMobileMenu();
         }
     }
 
@@ -163,22 +252,32 @@ class ProxiSafeApp {
     }
 
     showDashboard() {
-        this.currentPage = 'dashboard';
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        document.getElementById('dashboard-page').classList.add('active');
-        
-        // Initialize dashboard and charts
-        if (window.dashboardManager) {
-            window.dashboardManager.init();
+        try {
+            this.currentPage = 'dashboard';
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById('dashboard-page').classList.add('active');
+            
+            // Initialize dashboard and charts with delay to ensure DOM is ready
+            setTimeout(() => {
+                if (window.dashboardManager) {
+                    window.dashboardManager.init();
+                }
+                
+                this.initializeCharts();
+            }, 100);
+        } catch (error) {
+            console.error('Error showing dashboard:', error);
         }
-        
-        this.initializeCharts();
     }
 
     initializeCharts() {
         if (window.chartsManager) {
             setTimeout(() => {
-                window.chartsManager.init();
+                try {
+                    window.chartsManager.init();
+                } catch (error) {
+                    console.error('Error initializing charts:', error);
+                }
             }, 500);
         }
     }
@@ -243,11 +342,11 @@ function hideNotification() {
     }
 }
 
-// Error handling
-window.addEventListener('error', (e) => {
-    console.error('Application error:', e.error);
-    showNotification('An unexpected error occurred. Please refresh the page.', 'error');
-});
+// // Error handling
+// window.addEventListener('error', (e) => {
+//     console.error('Application error:', e.error);
+//     showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+// });
 
 window.addEventListener('unhandledrejection', (e) => {
     console.error('Unhandled promise rejection:', e.reason);

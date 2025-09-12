@@ -66,7 +66,7 @@ class AuthManager {
                     id: 1,
                     name: 'John Doe',
                     email: email,
-                    avatar: 'https://via.placeholder.com/40',
+                    avatar: null, // Will use CSS-based professional avatar
                     loginTime: new Date().toISOString()
                 };
 
@@ -125,7 +125,7 @@ class AuthManager {
                 id: Date.now(),
                 name: name,
                 email: email,
-                avatar: 'https://via.placeholder.com/40',
+                avatar: null, // Will use CSS-based professional avatar
                 signupTime: new Date().toISOString()
             };
 
