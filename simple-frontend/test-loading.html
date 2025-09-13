@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROXISAFE - Loading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        #console-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 PROXISAFE Loading Test</h1>
+        <p>This page tests if all JavaScript files load correctly without errors.</p>
+        
+        <div id="test-results">
+            <div class="status info">🔄 Running tests...</div>
+        </div>
+        
+        <h3>Actions:</h3>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testDashboard()">Test Dashboard</button>
+        <button onclick="testThemes()">Test Themes</button>
+        <button onclick="testAnalytics()">Test Analytics</button>
+        <button onclick="clearConsole()">Clear Console</button>
+        
+        <h3>Console Output:</h3>
+        <div id="console-output"></div>
+    </div>
+
+    <!-- Load all scripts in order -->
+    <script src="js/analytics-engine.js"></script>
+    <script src="js/theme-manager.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Capture console output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function addToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : '📝';
+            consoleOutput.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+
+        // Test functions
+        function updateTestResults(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const statusClass = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : '🔄';
+            results.innerHTML = `<div class="status ${statusClass}">${icon} ${message}</div>`;
+        }
+
+        function testLogin() {
+            try {
+                if (window.authManager) {
+                    console.log('✅ AuthManager loaded successfully');
+                    updateTestResults('AuthManager is working!', 'success');
+                } else {
+                    throw new Error('AuthManager not found');
+                }
+            } catch (error) {
+                console.error('❌ AuthManager test failed:', error);
+                updateTestResults('AuthManager test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testDashboard() {
+            try {
+                if (window.dashboardManager) {
+                    console.log('✅ DashboardManager loaded successfully');
+                    updateTestResults('DashboardManager is working!', 'success');
+                } else {
+                    throw new Error('DashboardManager not found');
+                }
+            } catch (error) {
+                console.error('❌ DashboardManager test failed:', error);
+                updateTestResults('DashboardManager test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testThemes() {
+            try {
+                if (window.themeManager) {
+                    console.log('✅ ThemeManager loaded successfully');
+                    // Test theme switching
+                    window.themeManager.setTheme('dark');
+                    setTimeout(() => {
+                        window.themeManager.setTheme('light');
+                        console.log('✅ Theme switching works');
+                    }, 1000);
+                    updateTestResults('ThemeManager is working!', 'success');
+                } else {
+                    throw new Error('ThemeManager not found');
+                }
+            } catch (error) {
+                console.error('❌ ThemeManager test failed:', error);
+                updateTestResults('ThemeManager test failed: ' + error.message, 'error');
+            }
+        }
+
+        function testAnalytics() {
+            try {
+                if (window.AnalyticsEngine) {
+                    const analytics = new AnalyticsEngine();
+                    console.log('✅ AnalyticsEngine loaded successfully');
+                    
+                    // Test basic calculation
+                    const testData = [1, 2, 3, 4, 5];
+                    const mean = analytics.mean(testData);
+                    console.log('✅ Analytics calculation works, mean:', mean);
+                    
+                    updateTestResults('AnalyticsEngine is working!', 'success');
+                } else {
+                    throw new Error('AnalyticsEngine not found');
+                }
+            } catch (error) {
+                console.error('❌ AnalyticsEngine test failed:', error);
+                updateTestResults('AnalyticsEngine test failed: ' + error.message, 'error');
+            }
+        }
+
+        function clearConsole() {
+            consoleOutput.textContent = '';
+        }
+
+        // Run initial tests
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log('🚀 Starting PROXISAFE loading tests...');
+                
+                let passedTests = 0;
+                let totalTests = 4;
+                
+                // Test each component
+                try {
+                    if (window.AnalyticsEngine) {
+                        console.log('✅ AnalyticsEngine loaded');
+                        passedTests++;
+                    } else {
+                        console.error('❌ AnalyticsEngine failed to load');
+                    }
+                    
+                    if (window.themeManager) {
+                        console.log('✅ ThemeManager loaded');
+                        passedTests++;
+                    } else {
+                        console.error('❌ ThemeManager failed to load');
+                    }
+                    
+                    if (window.authManager) {
+                        console.log('✅ AuthManager loaded');
+                        passedTests++;
+                    } else {
+                        console.error('❌ AuthManager failed to load');
+                    }
+                    
+                    if (window.dashboardManager) {
+                        console.log('✅ DashboardManager loaded');
+                        passedTests++;
+                    } else {
+                        console.error('❌ DashboardManager failed to load');
+                    }
+                    
+                    const successRate = (passedTests / totalTests) * 100;
+                    
+                    if (passedTests === totalTests) {
+                        updateTestResults(`All tests passed! (${passedTests}/${totalTests}) - Ready to use!`, 'success');
+                        console.log('🎉 All components loaded successfully!');
+                    } else {
+                        updateTestResults(`${passedTests}/${totalTests} tests passed (${successRate}%)`, 'error');
+                        console.log(`⚠️ ${totalTests - passedTests} components failed to load`);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Test execution failed:', error);
+                    updateTestResults('Test execution failed: ' + error.message, 'error');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
