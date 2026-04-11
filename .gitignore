@@ -1,0 +1,17 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Local env / secrets
+.env
+
+# YOLO weights (downloaded on first run; large)
+*.pt
+
+# OS / editor
+.DS_Store
+.idea/

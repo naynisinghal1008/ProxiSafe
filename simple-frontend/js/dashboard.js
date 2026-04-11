@@ -403,19 +403,22 @@ class DashboardManager {
             const div = document.createElement('div');
             div.className = 'camera-card';
             div.innerHTML = `
-                <div class="camera-preview">
+                <div class="camera-preview" onclick="openMLDemo()" style="cursor: pointer;">
                     <i class="fas fa-video" style="font-size: 2rem; color: #6b7280;"></i>
-                    <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">Live Feed</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">ML demo</div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                     <h4 style="font-weight: 600; color: #111827;">${camera.name}</h4>
                     <span class="status-badge ${camera.status}">${camera.status}</span>
                 </div>
                 <div style="font-size: 0.875rem; color: #6b7280; margin-bottom: 0.5rem;">${camera.location}</div>
-                <div style="font-size: 0.75rem; color: #9ca3af;">
+                <div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.75rem;">
                     <div>Violations Today: ${camera.violationsToday}</div>
                     <div>Last Seen: ${this.getTimeAgo(camera.lastSeen)}</div>
                 </div>
+                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="openMLDemo()">
+                    <i class="fas fa-flask"></i> Explore ML demo
+                </button>
             `;
             camerasGrid.appendChild(div);
         });
@@ -772,18 +775,51 @@ class DashboardManager {
     }
 
     // Advanced Analytics Methods
-    calculateAdvancedMetrics() {
-        if (!this.analyticsEngine || this.violations.length === 0) return;
+    async calculateAdvancedMetrics() {
+        if (this.violations.length === 0) return;
 
         try {
-            this.advancedMetrics = this.analyticsEngine.calculateAdvancedMetrics(this.violations, '24h');
-            
-            // Update UI with advanced metrics
-            this.updateAdvancedMetrics();
+            // Try ML API first (when service is running)
+            if (window.mlApiClient) {
+                const mlData = await window.mlApiClient.fetchMLStats(this.violations);
+                if (mlData && mlData._mlSource) {
+                    this.advancedMetrics = mlData;
+                    this.updateAdvancedMetrics();
+                    this.updateMLBadge(true);
+                    return;
+                }
+            }
+
+            // Fallback to built-in analytics engine
+            if (this.analyticsEngine) {
+                this.advancedMetrics = this.analyticsEngine.calculateAdvancedMetrics(this.violations, '24h');
+                this.updateAdvancedMetrics();
+            }
+            this.updateMLBadge(false);
         } catch (error) {
             console.error('Error calculating advanced metrics:', error);
-            // Continue without advanced metrics
+            if (this.analyticsEngine) {
+                this.advancedMetrics = this.analyticsEngine.calculateAdvancedMetrics(this.violations, '24h');
+                this.updateAdvancedMetrics();
+            }
+            this.updateMLBadge(false);
         }
+    }
+
+    updateMLBadge(mlActive) {
+        const container = document.querySelector('.advanced-metrics-container');
+        if (!container) return;
+        let badge = container.querySelector('.ml-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'ml-badge';
+            badge.title = 'ML Model Status';
+            const subtitle = container.querySelector('.section-subtitle');
+            if (subtitle) subtitle.appendChild(badge);
+        }
+        badge.className = 'ml-badge ' + (mlActive ? 'ml-active' : 'ml-offline');
+        badge.textContent = mlActive ? 'ML Powered' : 'Analytics';
+        badge.title = mlActive ? 'Predictions from ML model' : 'Using built-in analytics';
     }
 
     updateAdvancedMetrics() {
