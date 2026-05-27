@@ -14,18 +14,6 @@ A comprehensive, enterprise-ready social distancing monitoring system for public
 - **Demo User**: `demo@proxisafe.com` / `demo123`
 - **Test User**: `test@test.com` / `test123`
 
-## 🎬 **Demo Video**
-
-You can add a demo video file to the repository at `demo/demo.mp4` and it will be embedded below. Replace the path with your preferred location or a hosted URL (YouTube/Vimeo) if needed.
-
-<video src="demo/demo.mp4" controls style="max-width:100%; height:auto;">
-   Your browser does not support the video tag. Download the demo: [demo/demo.mp4](demo/demo.mp4)
-</video>
-
-If you'd rather host the demo on YouTube, paste the YouTube link here instead:
-
-[Watch demo on YouTube](https://www.youtube.com/)
-
 ## 📋 **Table of Contents**
 
 - [Features](#features)
