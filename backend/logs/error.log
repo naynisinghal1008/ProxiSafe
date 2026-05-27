@@ -1,6 +1,0 @@
-2025-09-12 22:37:33 [error]: Error connecting to MongoDB: querySrv ENOTFOUND _mongodb._tcp.cluster0.lkoaeub.mongodb.net
-2025-09-12 23:18:38 [error]: Error connecting to MongoDB: querySrv ENOTFOUND _mongodb._tcp.cluster0.lkoaeub.mongodb.net
-2025-09-12 23:22:10 [error]: MongoDB error: querySrv ENOTFOUND _mongodb._tcp.cluster0.lkoaeub.mongodb.net
-2025-09-12 23:23:06 [error]: MongoDB error: querySrv ENOTFOUND _mongodb._tcp.cluster0.lkoaeub.mongodb.net
-2025-09-12 23:23:35 [error]: MongoDB error: querySrv ENOTFOUND _mongodb._tcp.cluster0.lkoaeub.mongodb.net
-2025-09-13 10:04:16 [error]: MongoDB error: querySrv ENOTFOUND _mongodb._tcp.cluster0.lkoaeub.mongodb.net
