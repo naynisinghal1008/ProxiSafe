@@ -1,0 +1,12 @@
+# Optional: YOLO person detection (install AFTER requirements.txt).
+#
+# ultralytics pulls in the "opencv-python" package; recent opencv-python builds need numpy>=2,
+# while this project keeps numpy<2 for opencv-python-headless (see requirements.txt).
+# After every:  pip install -r requirements-yolo.txt
+# run the fix line below so only opencv-python-headless provides cv2:
+#
+#   pip uninstall -y opencv-python && pip install 'numpy>=1.26.3,<2' --force-reinstall 'opencv-python-headless==4.9.0.80'
+#
+# Leave DETECTOR_BACKEND unset in .env so the server auto-uses YOLO when ultralytics is installed.
+
+ultralytics>=8.0.0

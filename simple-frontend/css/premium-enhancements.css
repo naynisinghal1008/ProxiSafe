@@ -610,6 +610,8 @@ body.theme-light .glass-card:hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
     opacity: 0;
     transition: opacity 0.4s var(--ease-premium);
+    /* Allow clicks to reach buttons/links inside the card (pseudo-layer would steal them otherwise) */
+    pointer-events: none;
 }
 
 .glass-card:hover {

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/advanced-analytics.css">
     <link rel="stylesheet" href="css/industry-enhancements.css">
     <link rel="stylesheet" href="css/premium-enhancements.css">
+    <link rel="stylesheet" href="css/ml-overview.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -318,6 +319,41 @@
                             </div>
                         </div>
 
+                        <!-- ML demo — same flow as Camera Management (Open Camera | Upload Video) -->
+                        <section class="glass-card ml-overview-card" aria-label="ML detection demo">
+                            <div class="ml-overview-header">
+                                <div class="ml-overview-header-text">
+                                    <span class="ml-overview-badge"><i class="fas fa-microchip"></i> Integrated ML</span>
+                                    <h2 class="ml-overview-heading">Social distancing detection</h2>
+                                    <p class="ml-overview-lead">
+                                        Open the same demo as in <strong>Camera Management</strong>: OpenCV on the ML service draws
+                                        <span class="ml-tag-ok">green</span> boxes when distance is safe,
+                                        <span class="ml-tag-bad">red</span> when too close, and counts violated persons.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="ml-overview-actions" role="group" aria-label="Choose demo mode">
+                                <button type="button" id="ml-overview-open-camera" class="ml-overview-tile" aria-label="Open camera for ML demo">
+                                    <span class="ml-overview-tile-icon" aria-hidden="true"><i class="fas fa-camera"></i></span>
+                                    <span class="ml-overview-tile-title">Open Camera</span>
+                                    <span class="ml-overview-tile-hint">Live webcam with real-time detection</span>
+                                </button>
+                                <button type="button" id="ml-overview-upload-video" class="ml-overview-tile" aria-label="Upload video for ML demo">
+                                    <span class="ml-overview-tile-icon" aria-hidden="true"><i class="fas fa-file-video"></i></span>
+                                    <span class="ml-overview-tile-title">Upload Video</span>
+                                    <span class="ml-overview-tile-hint">Analyze a clip from your device</span>
+                                </button>
+                            </div>
+                            <div class="ml-overview-footer">
+                                <button type="button" id="ml-overview-open-menu" class="ml-overview-menu-btn">
+                                    <i class="fas fa-th-large"></i> Or open the full demo menu
+                                </button>
+                                <p class="ml-overview-note">
+                                    <i class="fas fa-server"></i> Run the API first: <code>cd ml-model</code> then <code>python app.py</code>
+                                </p>
+                            </div>
+                        </section>
+
                         <!-- Enhanced Charts and Recent Activity -->
                         <div class="overview-grid">
                             <div class="glass-card chart-card">
@@ -387,26 +423,12 @@
                                     </div>
                                 </div>
                                 <div class="camera-status-grid" id="camera-status" style="padding: var(--space-xl);">
-                                    <div class="camera-status-item online" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%); backdrop-filter: blur(20px); border-radius: var(--radius-button); padding: var(--space-md); margin: var(--space-sm); border: 1px solid rgba(16, 185, 129, 0.3);">
-                                        <div class="status-dot online"></div>
-                                        <div style="color: white; font-weight: 600;">CAM-001</div>
-                                        <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7);">Entrance</div>
-                                    </div>
-                                    <div class="camera-status-item online" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%); backdrop-filter: blur(20px); border-radius: var(--radius-button); padding: var(--space-md); margin: var(--space-sm); border: 1px solid rgba(16, 185, 129, 0.3);">
-                                        <div class="status-dot online"></div>
-                                        <div style="color: white; font-weight: 600;">CAM-002</div>
-                                        <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7);">Food Court</div>
-                                    </div>
-                                    <div class="camera-status-item online" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%); backdrop-filter: blur(20px); border-radius: var(--radius-button); padding: var(--space-md); margin: var(--space-sm); border: 1px solid rgba(16, 185, 129, 0.3);">
-                                        <div class="status-dot online"></div>
-                                        <div style="color: white; font-weight: 600;">CAM-003</div>
-                                        <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7);">Shopping</div>
-                                    </div>
-                                    <div class="camera-status-item offline" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%); backdrop-filter: blur(20px); border-radius: var(--radius-button); padding: var(--space-md); margin: var(--space-sm); border: 1px solid rgba(239, 68, 68, 0.3);">
-                                        <div class="status-dot offline"></div>
-                                        <div style="color: white; font-weight: 600;">CAM-004</div>
-                                        <div style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.7);">Maintenance</div>
-                                    </div>
+                                    <!-- Populated by dashboard.js -->
+                                </div>
+                                <div style="padding: 0 var(--space-xl) var(--space-xl);">
+                                    <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="openMLDemo()">
+                                        <i class="fas fa-flask"></i> Explore ML demo
+                                    </button>
                                 </div>
                             </div>
 
@@ -1120,6 +1142,78 @@
         </div>
     </div>
 
+    <!-- ML Live Camera Modal - OpenCV backend -->
+    <div id="ml-camera-modal" class="modal ml-camera-modal">
+        <div class="modal-content ml-camera-content">
+            <div class="modal-header">
+                <h2 id="ml-camera-title">Social Distancing Detection (OpenCV ML)</h2>
+                <button class="modal-close" onclick="closeMLCamera()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body ml-camera-body">
+                <div id="ml-demo-landing" class="ml-demo-landing">
+                    <p class="ml-demo-intro">Choose how you want to try the integrated ML model (requires the ML service running on port 5000).</p>
+                    <div class="ml-demo-options">
+                        <button type="button" class="ml-demo-option" onclick="startMLDemoCamera()">
+                            <i class="fas fa-camera"></i>
+                            <span class="ml-demo-option-title">Open Camera</span>
+                            <span class="ml-demo-option-hint">Live webcam with OpenCV detection</span>
+                        </button>
+                        <button type="button" class="ml-demo-option" onclick="startMLDemoVideo()">
+                            <i class="fas fa-file-video"></i>
+                            <span class="ml-demo-option-title">Upload Video</span>
+                            <span class="ml-demo-option-hint">Analyze a video file frame by frame</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="ml-demo-content" class="ml-demo-content hidden">
+                    <div class="ml-mode-tabs">
+                        <button class="ml-tab active" data-mode="camera" onclick="switchMLMode('camera')">
+                            <i class="fas fa-camera"></i> Open Camera
+                        </button>
+                        <button class="ml-tab" data-mode="video" onclick="switchMLMode('video')">
+                            <i class="fas fa-upload"></i> Upload Video
+                        </button>
+                    </div>
+                    <div id="ml-video-upload" class="ml-upload-zone hidden">
+                        <input type="file" id="ml-video-file" accept="video/*" onchange="handleVideoUpload(this)">
+                        <label for="ml-video-file" class="ml-upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Drop video or click to upload</span>
+                        </label>
+                    </div>
+                    <div class="ml-camera-stats">
+                        <div class="ml-stat">
+                            <span class="ml-stat-label">People detected</span>
+                            <span id="ml-people-count" class="ml-people-count">—</span>
+                        </div>
+                        <div class="ml-stat">
+                            <span class="ml-stat-label">Violated persons</span>
+                            <span id="ml-violation-count" class="ml-violation-count">0</span>
+                        </div>
+                        <div class="ml-stat">
+                            <span id="ml-status" class="ml-status">Ready</span>
+                        </div>
+                    </div>
+                    <p id="ml-detector-line" class="ml-detector-line" aria-live="polite"></p>
+                    <p id="ml-detect-hint" class="ml-detect-hint hidden" role="status"></p>
+                    <div class="ml-camera-container">
+                        <video id="ml-camera-video" class="ml-camera-video" playsinline muted></video>
+                        <canvas id="ml-camera-canvas" class="ml-camera-canvas"></canvas>
+                    </div>
+                    <p class="ml-legend">
+                        <span class="ml-legend-item"><span class="ml-box green"></span> Compliant (OK)</span>
+                        <span class="ml-legend-item"><span class="ml-box red"></span> Violation (too close)</span>
+                    </p>
+                    <button type="button" class="btn btn-secondary ml-back-to-choice" onclick="backToMLDemoChoice()">
+                        <i class="fas fa-arrow-left"></i> Back to options
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="notification-toast" class="notification-toast">
         <div class="toast-content">
@@ -1133,6 +1227,8 @@
 
     <!-- Scripts -->
     <script src="js/analytics-engine.js"></script>
+    <script src="js/ml-api.js"></script>
+    <script src="js/ml-camera.js"></script>
     <script src="js/theme-manager.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
